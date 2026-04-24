@@ -37,6 +37,7 @@ CREATE TABLE `Like` (
 CREATE TABLE Follow (
     follower_username VARCHAR(255),
     followed_username VARCHAR(255),
+    followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (follower_username) REFERENCES User(username) ON DELETE CASCADE,
     FOREIGN KEY (followed_username) REFERENCES User(username) ON DELETE CASCADE
 );
@@ -75,8 +76,8 @@ INSERT INTO Comment (post_id, username, content) VALUES
 (2, 'ducky_coder', 'Very efficient design.');
 
 -- Add dummy follows and likes
-INSERT INTO Follow (follower_username, followed_username) VALUES 
-('ducky_coder', 'maastricht_student');
+INSERT INTO Follow (follower_username, followed_username, followed_at) VALUES 
+('ducky_coder', 'maastricht_student', 2024-01-15 10:30:00);
 
 INSERT INTO `Like` (post_id, username) VALUES 
 (1, 'maastricht_student'),
