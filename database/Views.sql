@@ -8,11 +8,11 @@ AS activity_score FROM User ORDER BY activity_score DESC LIMIT 1;
 
 -- SYSTEM ANALYTICS VIEW
 CREATE VIEW LIST_USERS_WITHOUT_POSTS AS
-SELECT username from User
+SELECT username FROM User
 WHERE username NOT IN (SELECT username from Post);
 
 -- CONTENT POPULARITY VIEW ( POSTS WITH OVER 100 LIKES )
 CREATE VIEW SHOW_POPULAR_POSTS AS
-SELECT username, post_id, image_path, caption, COUNT(Like.username) AS like_count from Post
+SELECT username, post_id, image_path, caption, COUNT(Like.username) AS like_count FROM Post
 JOIN Like on `Like`.post_id = Post.post_id
 GROUP BY `Like`.post_id, username, post_id, image_path, caption HAVING COUNT(Like.username) > 100;
