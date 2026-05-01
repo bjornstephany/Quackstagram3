@@ -15,4 +15,4 @@ WHERE username NOT IN (SELECT username from Post);
 CREATE VIEW SHOW_POPULAR_POSTS AS
 SELECT username, post_id, image_path, caption, COUNT(Like.username) AS like_count from Post
 JOIN Like on `Like`.post_id = Post.post_id
-GROUP BY `Like`.post_id, username, post_id, image_path, caption HAVING COUNT(Like.username) > 100;
+GROUP BY username, post_id, image_path, caption HAVING COUNT(Like.username) > 100;
