@@ -1,50 +1,71 @@
 package src.model;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.BufferedWriter;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class NotificationStore {
-	private final Path notificationsFile = Paths.get("data", "notifications.txt");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-	public List<Notification> findNotificationsFor(String username) {
-		List<Notification> result = new ArrayList<>();
+    public List<Notification> findNotificationsFor(String username) {
+        List<Notification> result = new ArrayList<>();
+        String sql = """
+                SELECT n.username AS recipient_username,
+                       p.image_path,
+                       n.notified_at
+                FROM Notification n
+                JOIN Post p ON n.post_id = p.post_id
+                WHERE n.username = ?
+                ORDER BY n.notified_at DESC
+                """;
 
-		try (BufferedReader reader = Files.newBufferedReader(notificationsFile)) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				String[] parts = line.split(";");
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username);
 
-				if (parts.length >= 4 && parts[0].trim().equals(username)) {
-					result.add(
-							new Notification(parts[0].trim(), parts[1].trim(), parts[2].trim(), parts[3].trim()));
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException("Could not read notifications", e);
-		}
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Timestamp notifiedAt = resultSet.getTimestamp("notified_at");
+                    String imagePath = resultSet.getString("image_path");
+                    result.add(new Notification(
+                            resultSet.getString("recipient_username"),
+                            "Someone",
+                            imageIdFromPath(imagePath),
+                            notifiedAt.toLocalDateTime().format(FORMATTER)));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not read notifications", e);
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	public void addNotification(String recipientUsername, String actorUsername, String imageId) {
-		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    public void addNotification(String recipientUsername, String actorUsername, int postId) {
+        if (recipientUsername == null || actorUsername == null || recipientUsername.equals(actorUsername)) {
+            return;
+        }
 
-		String line = recipientUsername + ";" + actorUsername + ";" + imageId + ";" + timestamp;
+        String sql = "INSERT INTO Notification (username, post_id) VALUES (?, ?)";
 
-		try (BufferedWriter writer = Files.newBufferedWriter(notificationsFile, StandardOpenOption.CREATE,
-				StandardOpenOption.APPEND)) {
-			writer.write(line);
-			writer.newLine();
-		} catch (IOException e) {
-			throw new RuntimeException("Could not write notification", e);
-		}
-	}
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, recipientUsername);
+            statement.setInt(2, postId);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not write notification", e);
+        }
+    }
+
+    private String imageIdFromPath(String imagePath) {
+        String fileName = new java.io.File(imagePath).getName();
+        int dotIndex = fileName.lastIndexOf('.');
+        return dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
+    }
 }

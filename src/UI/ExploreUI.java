@@ -3,6 +3,8 @@ package src.UI;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import src.model.PostData;
+import src.model.PostStore;
 import src.model.SessionStore;
 import src.model.User;
 
@@ -14,13 +16,9 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.stream.Stream;
+import java.util.List;
 
 public class ExploreUI extends JFrame {
 
@@ -29,6 +27,7 @@ public class ExploreUI extends JFrame {
 	private static final int NAV_ICON_SIZE = 20; // Size for navigation icons
 	private static final int IMAGE_SIZE = WIDTH / 3; // Size for each image in the grid
 	private final SessionStore sessionStore = new SessionStore();
+	private final PostStore postStore = new PostStore();
 
 	public ExploreUI() {
 		setTitle("Explore");
@@ -71,24 +70,19 @@ public class ExploreUI extends JFrame {
 		// Image Grid
 		JPanel imageGridPanel = new JPanel(new GridLayout(0, 3, 2, 2)); // 3 columns, auto rows
 
-		// Load images from the uploaded folder
-		File imageDir = new File("img/uploaded");
-		if (imageDir.exists() && imageDir.isDirectory()) {
-			File[] imageFiles = imageDir.listFiles((dir, name) -> name.matches(".*\\.(png|jpg|jpeg)"));
-			if (imageFiles != null) {
-				for (File imageFile : imageFiles) {
-					ImageIcon imageIcon = new ImageIcon(new ImageIcon(imageFile.getPath()).getImage()
-							.getScaledInstance(IMAGE_SIZE, IMAGE_SIZE, Image.SCALE_SMOOTH));
-					JLabel imageLabel = new JLabel(imageIcon);
-					imageLabel.addMouseListener(new MouseAdapter() {
-						@Override
-						public void mouseClicked(MouseEvent e) {
-							displayImage(imageFile.getPath()); // Call method to display the clicked image
-						}
-					});
-					imageGridPanel.add(imageLabel);
+		List<PostData> posts = postStore.findAllPosts();
+		for (PostData post : posts) {
+			File imageFile = new File(post.getImagePath());
+			ImageIcon imageIcon = new ImageIcon(new ImageIcon(imageFile.getPath()).getImage()
+					.getScaledInstance(IMAGE_SIZE, IMAGE_SIZE, Image.SCALE_SMOOTH));
+			JLabel imageLabel = new JLabel(imageIcon);
+			imageLabel.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					displayImage(post.getImagePath());
 				}
-			}
+			});
+			imageGridPanel.add(imageLabel);
 		}
 
 		JScrollPane scrollPane = new JScrollPane(imageGridPanel);
@@ -151,32 +145,18 @@ public class ExploreUI extends JFrame {
 		// Extract image ID from the imagePath
 		String imageId = new File(imagePath).getName().split("\\.")[0];
 
-		// Read image details
-		String username = "";
-		String bio = "";
-		String timestampString = "";
+		PostData post = postStore.findPostByImageId(imageId);
+		String username = post == null ? "" : post.getUsername();
+		String bio = post == null ? "" : post.getCaption();
+		LocalDateTime timestamp = post == null ? null : post.getPostedAt();
 		int likes = 0;
-		Path detailsPath = Paths.get("img", "image_details.txt");
-		try (Stream<String> lines = Files.lines(detailsPath)) {
-			String details = lines.filter(line -> line.contains("ImageID: " + imageId)).findFirst().orElse("");
-			if (!details.isEmpty()) {
-				String[] parts = details.split(", ");
-				username = parts[1].split(": ")[1];
-				bio = parts[2].split(": ")[1];
-				System.out.println(bio + "this is where you get an error " + parts[3]);
-				timestampString = parts[3].split(": ")[1];
-				likes = Integer.parseInt(parts[4].split(": ")[1]);
-			}
-		} catch (IOException ex) {
-			ex.printStackTrace();
-			// Handle exception
+		if (post != null) {
+			likes = post.getLikesCount();
 		}
 
 		// Calculate time since posting
 		String timeSincePosting = "Unknown";
-		if (!timestampString.isEmpty()) {
-			LocalDateTime timestamp = LocalDateTime.parse(timestampString,
-					DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+		if (timestamp != null) {
 			LocalDateTime now = LocalDateTime.now();
 			long days = ChronoUnit.DAYS.between(timestamp, now);
 			timeSincePosting = days + " day" + (days != 1 ? "s" : "") + " ago";
