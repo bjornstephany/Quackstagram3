@@ -100,6 +100,12 @@ INSERT INTO Comment (post_id, username, content, timestamp) VALUES
 (20, 'alice_wanders','The tech world is going to be buzzing. Great work Mia!',                 '2025-04-01 20:00:00'),
 (20, 'kate_designs','Monday cannot come soon enough. Subscribed to your newsletter.',          '2025-04-01 21:00:00');
 
+-- Extra comments so query 13 returns post 2 as having more comments than likes.
+-- Post 2 has no likes in this seed data.
+INSERT INTO Comment (post_id, username, content, timestamp) VALUES
+(2, 'bob_codes',  'Lisbon looks amazing. Adding it to my travel list.', '2025-02-14 16:00:00'),
+(2, 'jake_travels','Those tiles are unreal. Great shot!',               '2025-02-14 17:00:00');
+
 -- =====================
 -- FOLLOWS
 -- =====================
@@ -235,6 +241,16 @@ INSERT INTO `Like` (post_id, username) VALUES
 (5,'bulk_u076'),(5,'bulk_u077'),(5,'bulk_u078'),(5,'bulk_u079'),(5,'bulk_u080'),
 (5,'bulk_u081'),(5,'bulk_u082'),(5,'bulk_u083'),(5,'bulk_u084'),(5,'bulk_u085'),
 (5,'bulk_u086'),(5,'bulk_u087'),(5,'bulk_u088'),(5,'bulk_u089'),(5,'bulk_u090');
+
+-- Extra likes so query 10 returns post 5 as liked by every user.
+INSERT INTO `Like` (post_id, username)
+SELECT 5, username
+FROM User
+WHERE username NOT IN (
+    SELECT username
+    FROM `Like`
+    WHERE post_id = 5
+);
 
 -- =====================
 -- NOTIFICATIONS

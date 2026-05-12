@@ -57,10 +57,10 @@ FROM `Like`
 GROUP BY post_id
 HAVING COUNT(DISTINCT username) = (SELECT COUNT(*) FROM User);
 
--- 11. Display the most active user (based on posts, comments 7, and likes).
+-- 11. Display the most active user (based on posts, comments, and likes).
 SELECT username, (posts + comments + likes) AS activity_score
 FROM (
-    SELECT u.username, COUNT (DISTINCT p.post_id) AS posts, COUNT (DISTINCT c.comment_id) AS comments, COUNT (DISTINCT l.post_id) AS likes
+    SELECT u.username, COUNT(DISTINCT p.post_id) AS posts, COUNT(DISTINCT c.comment_id) AS comments, COUNT(DISTINCT l.post_id) AS likes
     FROM User u
     LEFT JOIN Post p ON u.username = p.username
     LEFT JOIN Comment c ON u.username = c.username
@@ -68,7 +68,7 @@ FROM (
     GROUP BY u.username
 ) AS activity
 ORDER BY activity_score DESC
-Limit 1;
+LIMIT 1;
 
 -- 12. Find the average number of likes per post for each user.
 SELECT p.username, AVG(like_counts.total) AS average_likes
@@ -92,22 +92,21 @@ HAVING comments > likes;
 SELECT l.username
 FROM `Like` l
 JOIN Post p ON l.post_id = p.post_id
-WHERE p.username = 'henry_gamers' -- paticular user = henry_gamers
+WHERE p.username = 'frank_photos' -- particular user = frank_photos
 GROUP BY l.username
-HAVING COUNT(DISTINCT l.post_id) = (SELECT COUNT(*) FROM Post WHERE username = 'henry_gamers');
+HAVING COUNT(DISTINCT l.post_id) = (SELECT COUNT(*) FROM Post WHERE username = 'frank_photos');
 
 -- 15. Display the most popular post of each user (based on likes).
-SELECT post_id FROM Post p
-JOIN `Like` l ON p.post_id = l.post_id
-GROUP BY p.post_id
-HAVING COUNT(l.post_id) = (
-    SELECT MAX(likes) FROM (
-        SELECT COUNT(*) AS likes
-        FROM Post p2
-        JOIN `Like` ON Post.post_id = `Like`.post_id
-        Where p2.username = p.username
-        GROUP BY p2.post_id
-    ) AS user_likes
+SELECT p.username, p.post_id, COUNT(l.username) AS total_likes
+FROM Post p
+LEFT JOIN `Like` l ON p.post_id = l.post_id
+GROUP BY p.username, p.post_id
+HAVING COUNT(l.username) >= ALL (
+    SELECT COUNT(l2.username)
+    FROM Post p2
+    LEFT JOIN `Like` l2 ON p2.post_id = l2.post_id
+    WHERE p2.username = p.username
+    GROUP BY p2.post_id
 );
 
 -- 16. Find the user(s) with the highest ratio of followers to following.
@@ -131,24 +130,34 @@ GROUP BY MONTH(posted_at)
 ORDER BY total_posts DESC LIMIT 1;
 
 -- 18. Identify users who have not interacted with a specific user’s posts.
-SELECT username from User
+SELECT username FROM User
 WHERE username NOT IN (
-    SELECT username FROM `Like`
+    SELECT `Like`.username FROM `Like`
     JOIN Post ON `Like`.post_id = Post.post_id
     WHERE Post.username = 'henry_games'
 ) AND username NOT IN (
-    SELECT username FROM Comment
+    SELECT Comment.username FROM Comment
     JOIN Post ON Comment.post_id = Post.post_id
     WHERE Post.username = 'henry_games'
 );
 
 -- 19. Display the user with the greatest increase in followers in the last X days.
-SELECT followed_username, COUNT(*) AS new_followers                                                                                                                               
-FROM Follow                                                                                                                                                                       
-WHERE followed_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)                                                                                                                         
-GROUP BY followed_username                                                                                                                                                        
-ORDER BY new_followers DESC
-LIMIT 1;                       
+SELECT recent_followers.followed_username AS username,
+       recent_followers.new_followers,
+       total_followers.followers AS total_followers
+FROM (
+    SELECT followed_username, COUNT(*) AS new_followers
+    FROM Follow
+    WHERE followed_at >= DATE_SUB((SELECT MAX(followed_at) FROM Follow), INTERVAL 30 DAY)
+    GROUP BY followed_username
+) AS recent_followers
+JOIN (
+    SELECT followed_username, COUNT(*) AS followers
+    FROM Follow
+    GROUP BY followed_username
+) AS total_followers ON recent_followers.followed_username = total_followers.followed_username
+ORDER BY recent_followers.new_followers DESC
+LIMIT 1; -- X = 30 days
 
 -- 20. Find users who are followed by more than X.
 SELECT followed_username, COUNT(*) AS followers                                                                                                                                   
