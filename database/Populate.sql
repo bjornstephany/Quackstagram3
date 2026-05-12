@@ -109,27 +109,27 @@ INSERT INTO Comment (post_id, username, content, timestamp) VALUES
 -- =====================
 -- FOLLOWS
 -- =====================
-INSERT INTO Follow (follower_username, followed_username, followed_at) VALUES
-('bob_codes',        'alice_wanders',  '2025-01-01 10:00:00'),
-('carol_creates',    'alice_wanders',  '2025-01-02 11:00:00'),
-('jake_travels',     'alice_wanders',  '2025-01-03 12:00:00'),
-('frank_photos',     'alice_wanders',  '2025-01-04 09:00:00'),
-('alice_wanders',    'frank_photos',   '2025-01-05 08:00:00'),
-('alice_wanders',    'jake_travels',   '2025-01-06 10:00:00'),
-('alice_wanders',    'carol_creates',  '2025-01-07 11:00:00'),
-('kate_designs',     'carol_creates',  '2025-01-08 14:00:00'),
-('mia_writes',       'carol_creates',  '2025-01-09 15:00:00'),
-('leo_music',        'carol_creates',  '2025-01-10 16:00:00'),
-('dan_eats',         'iris_bakes',     '2025-01-11 12:00:00'),
-('grace_reads',      'mia_writes',     '2025-01-12 09:00:00'),
-('henry_games',      'leo_music',      '2025-01-13 20:00:00'),
-('eva_runs',         'bob_codes',      '2025-01-14 06:00:00'),
-('noah_builds',      'kate_designs',   '2025-01-15 13:00:00'),
-('checkpointmember', 'alice_wanders',  '2025-01-16 10:00:00'),
-('bob_codes',        'mia_writes',     '2025-01-17 11:00:00'),
-('iris_bakes',       'dan_eats',       '2025-01-18 12:00:00'),
-('jake_travels',     'frank_photos',   '2025-01-19 09:00:00'),
-('mia_writes',       'bob_codes',      '2025-01-20 14:00:00');
+INSERT INTO Follow (follower_username, followed_username) VALUES
+('bob_codes',        'alice_wanders'),
+('carol_creates',    'alice_wanders'),
+('jake_travels',     'alice_wanders'),
+('frank_photos',     'alice_wanders'),
+('alice_wanders',    'frank_photos'),
+('alice_wanders',    'jake_travels'),
+('alice_wanders',    'carol_creates'),
+('kate_designs',     'carol_creates'),
+('mia_writes',       'carol_creates'),
+('leo_music',        'carol_creates'),
+('dan_eats',         'iris_bakes'),
+('grace_reads',      'mia_writes'),
+('henry_games',      'leo_music'),
+('eva_runs',         'bob_codes'),
+('noah_builds',      'kate_designs'),
+('checkpointmember', 'alice_wanders'),
+('bob_codes',        'mia_writes'),
+('iris_bakes',       'dan_eats'),
+('jake_travels',     'frank_photos'),
+('mia_writes',       'bob_codes');
 
 -- =====================
 -- LIKES (distributed across posts)
@@ -138,7 +138,6 @@ INSERT INTO `Like` (post_id, username) VALUES
 -- Post 1: alice amsterdam
 (1, 'bob_codes'), (1, 'carol_creates'), (1, 'jake_travels'), (1, 'frank_photos'),
 (1, 'grace_reads'), (1, 'henry_games'), (1, 'eva_runs'), (1, 'dan_eats'),
-(1, 'iris_bakes'), (1, 'kate_designs'), (1, 'leo_music'), (1, 'mia_writes'),
 (1, 'noah_builds'), (1, 'checkpointmember'),
 -- Post 3: bob setup
 (3, 'alice_wanders'), (3, 'henry_games'), (3, 'kate_designs'), (3, 'eva_runs'), (3, 'mia_writes'),

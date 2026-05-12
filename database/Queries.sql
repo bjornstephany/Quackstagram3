@@ -2,7 +2,7 @@
 SELECT followed_username, COUNT(*) AS followers
 FROM Follow
 GROUP BY followed_username
-HAVING COUNT(*) > 10;  -- can put in any value but we take X = 10 for this example
+HAVING COUNT(*) > 2;  -- can put in any value but we take X = 2 for this example
 
 -- 2. Show the total number of posts made by each user.
 SELECT username, COUNT(*) AS total_posts
