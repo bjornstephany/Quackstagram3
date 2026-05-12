@@ -4,15 +4,10 @@
 
 -- Indexes are good for columns you select a lot but don't update a lot on non primary keys
 
-CREATE INDEX post_username ON Post (username);
-CREATE INDEX like_postID ON `Like` (post_id);
+CREATE INDEX idx_post_username ON Post(username);
 
--- PRE INDEX VIEW SPEEDS:
--- SHOW_MOST_ACTIVE_USER = 
--- LIST_USERS_WITHOUT_POSTS = 
--- SHOW_POPULAR_POSTS = 
+CREATE INDEX idx_comment_username ON Comment(username);
 
--- POST INDEX VIEW SPEEDS:
--- SHOW_MOST_ACTIVE_USER = 
--- LIST_USERS_WITHOUT_POSTS = 
--- SHOW_POPULAR_POSTS = 
+CREATE INDEX idx_like_username ON `Like`(username);
+
+CREATE INDEX idx_like_post_id ON `Like`(post_id);
