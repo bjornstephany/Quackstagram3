@@ -2,7 +2,7 @@
 SELECT followed_username, COUNT(*) AS followers
 FROM Follow
 GROUP BY followed_username
-HAVING COUNT(*) > 10;  -- X = 10
+HAVING COUNT(*) > 10;  -- can put in any value but we take X = 10 for this example
 
 -- 2. Show the total number of posts made by each user.
 SELECT username, COUNT(*) AS total_posts
@@ -13,7 +13,7 @@ GROUP BY username;
 SELECT c.*
 FROM Comment c
 JOIN Post p ON c.post_id = p.post_id
-WHERE p.username = 'henry_games';  -- patricular user = henry_games
+WHERE p.username = 'henry_games';  -- particular user = henry_games; can put any other username as well
 
 -- 4. Display the top X most liked posts.
 SELECT post_id, COUNT(*) AS total_likes
