@@ -13,7 +13,7 @@ GROUP BY username;
 SELECT c.*
 FROM Comment c
 JOIN Post p ON c.post_id = p.post_id
-WHERE p.username = 'henry_games';  -- particular user = henry_games; can put any other username as well
+WHERE p.username = 'alice_wanders';  -- particular user = alice_wanders; can put any other username as well
 
 -- 4. Display the top X most liked posts.
 SELECT post_id, COUNT(*) AS total_likes
