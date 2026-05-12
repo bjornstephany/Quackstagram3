@@ -2,16 +2,15 @@ package src.UI;
 import javax.swing.*;
 
 import src.model.ProfileData;
+import src.model.PostData;
+import src.model.PostStore;
 import src.model.SessionStore;
 import src.model.User;
 import src.model.UserStore;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.awt.*;
-import java.nio.file.*;
-import java.util.stream.Stream;
 
 public class QuackstagramProfileUI extends JFrame {
 
@@ -25,6 +24,7 @@ public class QuackstagramProfileUI extends JFrame {
 	private JPanel navigationPanel; // Panel for the navigation
 	private User currentUser; // User object to store the current user's information
 	private final UserStore userStore = new UserStore();
+	private final PostStore postStore = new PostStore();
 	private final SessionStore sessionStore = new SessionStore();
 	private ProfileData profileData;
 
@@ -205,24 +205,17 @@ public class QuackstagramProfileUI extends JFrame {
 		contentPanel.removeAll(); // Clear existing content
 		contentPanel.setLayout(new GridLayout(0, 3, 5, 5)); // Grid layout for image grid
 
-		Path imageDir = Paths.get("img", "uploaded");
-		try (Stream<Path> paths = Files.list(imageDir)) {
-			paths.filter(path -> path.getFileName().toString().startsWith(currentUser.getUsername() + "_"))
-					.forEach(path -> {
-						ImageIcon imageIcon = new ImageIcon(new ImageIcon(path.toString()).getImage()
-								.getScaledInstance(GRID_IMAGE_SIZE, GRID_IMAGE_SIZE, Image.SCALE_SMOOTH));
-						JLabel imageLabel = new JLabel(imageIcon);
-						imageLabel.addMouseListener(new MouseAdapter() {
-							@Override
-							public void mouseClicked(MouseEvent e) {
-								displayImage(imageIcon); // Call method to display the clicked image
-							}
-						});
-						contentPanel.add(imageLabel);
-					});
-		} catch (IOException ex) {
-			ex.printStackTrace();
-			// Handle exception (e.g., show a message or log)
+		for (PostData post : postStore.findPostsByUser(currentUser.getUsername())) {
+			ImageIcon imageIcon = new ImageIcon(new ImageIcon(post.getImagePath()).getImage()
+					.getScaledInstance(GRID_IMAGE_SIZE, GRID_IMAGE_SIZE, Image.SCALE_SMOOTH));
+			JLabel imageLabel = new JLabel(imageIcon);
+			imageLabel.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					displayImage(imageIcon);
+				}
+			});
+			contentPanel.add(imageLabel);
 		}
 
 		JScrollPane scrollPane = new JScrollPane(contentPanel);

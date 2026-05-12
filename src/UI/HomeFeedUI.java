@@ -4,6 +4,8 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import src.model.NotificationStore;
+import src.model.PostData;
+import src.model.PostStore;
 import src.model.SessionStore;
 import src.model.User;
 
@@ -16,13 +18,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
 
 public class HomeFeedUI extends JFrame {
 	private static final int WIDTH = 300;
@@ -37,6 +35,7 @@ public class HomeFeedUI extends JFrame {
 	private JPanel imageViewPanel;
 	private final SessionStore sessionStore = new SessionStore();
 	private final NotificationStore interactionStore = new NotificationStore();
+	private final PostStore postStore = new PostStore();
 
 	public HomeFeedUI() {
 		setTitle("Quakstagram Home 3");
@@ -184,113 +183,29 @@ public class HomeFeedUI extends JFrame {
 	}
 
 	private void handleLikeAction(String imageId, JLabel likesLabel) {
-		Path detailsPath = Paths.get("img", "image_details.txt");
-		StringBuilder newContent = new StringBuilder();
-		boolean updated = false;
-		String currentUser = "";
-		String imageOwner = "";
-
-		// Retrieve the current user from users.txt
-		try (BufferedReader userReader = Files.newBufferedReader(Paths.get("data", "users.txt"))) {
-			String line = userReader.readLine();
-			if (line != null) {
-				currentUser = line.split(":")[0].trim();
+		String currentUser = sessionStore.getLoggedInUsername();
+		PostStore.LikeResult result = postStore.likePost(imageId, currentUser);
+		if (result != null) {
+			likesLabel.setText("Likes: " + result.getLikesCount());
+			if (result.isNewLike()) {
+				interactionStore.addNotification(result.getImageOwner(), currentUser, result.getPostId());
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// Read and update image_details.txt
-		try (BufferedReader reader = Files.newBufferedReader(detailsPath)) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.contains("ImageID: " + imageId)) {
-					String[] parts = line.split(", ");
-					imageOwner = parts[1].split(": ")[1];
-					int likes = Integer.parseInt(parts[4].split(": ")[1]);
-					likes++; // Increment the likes count
-					parts[4] = "Likes: " + likes;
-					line = String.join(", ", parts);
-
-					// Update the UI
-					likesLabel.setText("Likes: " + likes);
-					updated = true;
-				}
-				newContent.append(line).append("\n");
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// Write updated likes back to image_details.txt
-		if (updated) {
-			try (BufferedWriter writer = Files.newBufferedWriter(detailsPath)) {
-				writer.write(newContent.toString());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			// Record the like in notifications.txt
-			interactionStore.addNotification(imageOwner, currentUser, imageId);
 		}
 	}
 
 	private String[][] createSampleData() {
 		String currentUser = sessionStore.getLoggedInUsername();
-
-		String followedUsers = "";
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get("data", "following.txt"))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.startsWith(currentUser + ":")) {
-					followedUsers = line.split(":")[1].trim();
-					break;
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		List<PostData> posts = postStore.findFeedPosts(currentUser);
+		String[][] sampleData = new String[posts.size()][];
+		for (int i = 0; i < posts.size(); i++) {
+			PostData post = posts.get(i);
+			sampleData[i] = new String[] {
+					post.getUsername(),
+					post.getCaption(),
+					"Likes: " + post.getLikesCount(),
+					post.getImagePath()
+			};
 		}
-
-		// Temporary structure to hold the data
-		String[][] tempData = new String[100][]; // Assuming a maximum of 100 posts for simplicity
-		int count = 0;
-
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get("img", "image_details.txt"))) {
-			String line;
-			while ((line = reader.readLine()) != null && count < tempData.length) {
-				String[] details = line.split(", ");
-				String imagePoster = details[1].split(": ")[1];
-				if (imagePoster.equals(currentUser) || followedUsers.contains(imagePoster)) {
-					// Check which extension this file has
-					String baseName = details[0].split(": ")[1];
-					String[] extensions = { "png", "jpg", "jpeg" };
-					File imageFile = null;
-					for (String ext : extensions) {
-						File f = new File("img/uploaded/" + baseName + "." + ext);
-						if (f.exists() && f.canRead()) {
-							imageFile = f;
-							break;
-						}
-					}
-
-					if (imageFile == null) {
-						throw new IOException("Image file not found for " + baseName + " (tried png, jpg, jpeg)");
-					}
-
-					String description = details[2].split(": ")[1];
-					String likes = "Likes: " + details[4].split(": ")[1];
-
-					tempData[count++] = new String[] { imagePoster, description, likes, imageFile.getPath() };
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// Transfer the data to the final array
-		String[][] sampleData = new String[count][];
-		System.arraycopy(tempData, 0, sampleData, 0, count);
-
 		return sampleData;
 	}
 
@@ -368,18 +283,9 @@ public class HomeFeedUI extends JFrame {
 	}
 
 	private void refreshDisplayImage(String[] postData, String imageId) {
-		// Read updated likes count from image_details.txt
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get("img", "image_details.txt"))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.contains("ImageID: " + imageId)) {
-					String likes = line.split(", ")[4].split(": ")[1];
-					postData[2] = "Likes: " + likes;
-					break;
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		PostData post = postStore.findPostByImageId(imageId);
+		if (post != null) {
+			postData[2] = "Likes: " + post.getLikesCount();
 		}
 
 		// Call displayImage with updated postData

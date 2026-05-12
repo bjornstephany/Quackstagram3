@@ -1,62 +1,43 @@
 package src.model;
-import java.io.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserRelationshipManager {
+    private final UserStore userStore = new UserStore();
 
-    private final String followersFilePath = "data/followers.txt";
-
-    // Method to follow a user
-    public void followUser(String follower, String followed) throws IOException {
-        if (!isAlreadyFollowing(follower, followed)) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(followersFilePath, true))) {
-                writer.write(follower + ":" + followed);
-                writer.newLine();
-            }
-        }
+    public void followUser(String follower, String followed) {
+        userStore.followUser(follower, followed);
     }
 
-    // Method to check if a user is already following another user
-    private boolean isAlreadyFollowing(String follower, String followed) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(followersFilePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(follower + ":" + followed)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    public List<String> getFollowers(String username) {
+        return findUsers("SELECT follower_username FROM Follow WHERE followed_username = ?", username);
     }
 
-    // Method to get the list of followers for a user
-    public List<String> getFollowers(String username) throws IOException {
-        List<String> followers = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(followersFilePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(":");
-                if (parts[1].equals(username)) {
-                    followers.add(parts[0]);
-                }
-            }
-        }
-        return followers;
+    public List<String> getFollowing(String username) {
+        return findUsers("SELECT followed_username FROM Follow WHERE follower_username = ?", username);
     }
 
-    // Method to get the list of users a user is following
-    public List<String> getFollowing(String username) throws IOException {
-        List<String> following = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(followersFilePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(":");
-                if (parts[0].equals(username)) {
-                    following.add(parts[1]);
+    private List<String> findUsers(String sql, String username) {
+        List<String> users = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    users.add(resultSet.getString(1));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not load relationships", e);
         }
-        return following;
+
+        return users;
     }
 }

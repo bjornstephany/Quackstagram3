@@ -41,7 +41,6 @@ public class NotificationsUI extends JFrame {
 		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-		// Read the current username from users.txt
 		String currentUsername = sessionStore.getLoggedInUsername();
 
 		for (Notification item : interactionStore.findNotificationsFor(currentUsername)) {

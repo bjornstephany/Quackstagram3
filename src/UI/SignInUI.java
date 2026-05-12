@@ -2,12 +2,9 @@ package src.UI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import src.model.SessionStore;
 import src.model.User;
+import src.model.UserStore;
 
 public class SignInUI extends JFrame {
 
@@ -19,6 +16,8 @@ public class SignInUI extends JFrame {
     private JButton btnSignIn, btnRegisterNow;
     private JLabel lblPhoto;
     private User newUser;
+    private final SessionStore sessionStore = new SessionStore();
+    private final UserStore userStore = new UserStore();
     
 
     public SignInUI() {
@@ -136,32 +135,13 @@ private void onRegisterNowClicked(ActionEvent event) {
 }
 
 private boolean verifyCredentials(String username, String password) {
-    try (BufferedReader reader = new BufferedReader(new FileReader("data/credentials.txt"))) {
-        String line;
-        while ((line = reader.readLine()) != null) {
-            String[] credentials = line.split(":");
-            if (credentials[0].equals(username) && credentials[1].equals(password)) {
-            String bio = credentials[2];
-            // Create User object and save information
-        newUser = new User(username, bio, password); // Assuming User constructor takes these parameters
-        saveUserInformation(newUser);
-    
-                return true;
-            }
-        }
-    } catch (IOException e) {
-        e.printStackTrace();
+    newUser = userStore.verifyCredentials(username, password);
+    if (newUser != null) {
+        sessionStore.setLoggedInUsername(newUser.getUsername());
+        return true;
     }
     return false;
 }
-
-   private void saveUserInformation(User user) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/users.txt", false))) {
-            writer.write(user.toString());  // Implement a suitable toString method in User class
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
