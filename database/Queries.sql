@@ -5,6 +5,7 @@ GROUP BY followed_username
 HAVING COUNT(*) > 10;  -- X = 10
 
 -- 2. Show the total number of posts made by each user.
+SELECT username, COUNT(*) AS total_posts
 FROM Post
 GROUP BY username;
 
