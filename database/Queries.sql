@@ -135,7 +135,7 @@ SELECT username from User
 WHERE username NOT IN (
     SELECT username FROM `Like`
     JOIN Post ON `Like`.post_id = Post.post_id
-    WHERE p.username = 'henry_games'
+    WHERE Post.username = 'henry_games'
 ) AND username NOT IN (
     SELECT username FROM Comment
     JOIN Post ON Comment.post_id = Post.post_id
