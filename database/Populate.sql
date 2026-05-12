@@ -132,7 +132,6 @@ INSERT INTO `Like` (post_id, username) VALUES
 -- Post 1: alice amsterdam
 (1, 'bob_codes'), (1, 'carol_creates'), (1, 'jake_travels'), (1, 'frank_photos'),
 (1, 'grace_reads'), (1, 'henry_games'), (1, 'eva_runs'), (1, 'dan_eats'),
-(1, 'iris_bakes'), (1, 'kate_designs'), (1, 'leo_music'), (1, 'mia_writes'),
 (1, 'noah_builds'), (1, 'checkpointmember'),
 -- Post 3: bob setup
 (3, 'alice_wanders'), (3, 'henry_games'), (3, 'kate_designs'), (3, 'eva_runs'), (3, 'mia_writes'),
